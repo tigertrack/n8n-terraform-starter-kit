@@ -1,0 +1,63 @@
+# Create the .env file from Terraform template
+cat <<EOT >> .env
+${env_file}
+EOT
+
+# Wait for n8n to be ready
+echo "Waiting for n8n to start..."
+sleep 45
+
+apt-get install -y certbot
+
+# Configure nginx as reverse proxy - HTTP ONLY first
+cat <<'NGINX_CONFIG' > /etc/nginx/sites-available/n8n
+server {
+    listen 80;
+    server_name ${domain_name};
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/html;
+    }
+
+    location / {
+        proxy_pass http://localhost:5678;
+        proxy_http_version 1.1;
+        proxy_connect_timeout 300s;
+        proxy_send_timeout 300s;
+        proxy_read_timeout 300s;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+NGINX_CONFIG
+
+# Enable the nginx site
+ln -sf /etc/nginx/sites-available/n8n /etc/nginx/sites-enabled/
+rm -f /etc/nginx/sites-enabled/default
+
+# Test nginx configuration
+nginx -t
+
+# Start nginx
+systemctl enable nginx
+systemctl start nginx
+
+# Wait a bit for nginx to be fully ready
+sleep 5
+
+# Now obtain SSL certificate with Certbot (this will modify the nginx config)
+certbot --nginx -d ${domain_name} --non-interactive --agree-tos --email ${ssl_email} --redirect
+
+# Set up automatic certificate renewal
+systemctl enable certbot.timer
+systemctl start certbot.timer
+
+# Add cron job for renewal (backup method)
+echo "0 0,12 * * * root certbot renew --quiet --post-hook 'systemctl reload nginx'" >> /etc/crontab
+
+echo "Setup complete! n8n should be accessible at https://${domain_name}"

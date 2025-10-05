@@ -76,14 +76,23 @@ locals {
     POSTGRES_PASSWORD              = var.basic_auth_password
     N8N_ENCRYPTION_KEY             = var.n8n_encryption_key
     N8N_USER_MANAGEMENT_JWT_SECRET = var.n8n_user_management_jwt_secret
-    domain_name                    = "n8n.${var.domain_name}"
   })
 
-  user_data_rendered = templatefile("${path.module}/templates/user_data.sh.tmpl", {
+  docker_config = templatefile("${path.module}/templates/user_data.sh.tmpl", {
     env_file = replace(local.env_rendered, "$", "\\$")
+  })
+
+  dns_env = var.create_dns_record ? templatefile("${path.module}/templates/dns_env.tmpl", {
+    DOMAIN_NAME                    = "n8n.${var.domain_name}"
+  }) : ""
+
+  dns_config = var.create_dns_record ? templatefile("${path.module}/templates/dns_config.sh.tmpl", {
+    env_file = replace(local.dns_env, "$", "\\$")
     domain_name = "n8n.${var.domain_name}"
     ssl_email = var.ssl_email
-  })
+  }) : ""
+
+  user_data_rendered = join("\n", [local.docker_config, local.dns_config])
 }
 
 resource "aws_instance" "n8n" {
