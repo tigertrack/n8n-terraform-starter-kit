@@ -4,11 +4,12 @@ instance_type = "t3.small"
 
 # SSH Configuration
 key_name = "key-name-for-aws"
-public_key_path = "~/.ssh/local-path-ssh-public-key"
+public_key_path = "~/.ssh/id_rsa.pub"
 my_ip_cidr = "0.0.0.0/0"  # Restrict SSH access to your IP, set to 0 to allow all IP
 
 # Domain Configuration
 domain_name = "yourdomain.com"
+subdomain_name = "subdomain"
 create_dns_record = true # Set to false if you only just want to use IP
 ssl_email = "your@email.com"
 
