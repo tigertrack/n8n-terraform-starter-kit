@@ -64,7 +64,7 @@ data "aws_route53_zone" "main" {
 resource "aws_route53_record" "n8n_dns" {
   count   = var.create_dns_record ? 1 : 0
   zone_id = data.aws_route53_zone.main.zone_id
-  name    = "n8n.${var.domain_name}"
+  name    = "${var.subdomain_name}.${var.domain_name}"
   type    = "A"
   ttl     = 300
   records = [aws_instance.n8n.public_ip]
@@ -83,12 +83,12 @@ locals {
   })
 
   dns_env = var.create_dns_record ? templatefile("${path.module}/templates/dns_env.tmpl", {
-    DOMAIN_NAME                    = "n8n.${var.domain_name}"
+    DOMAIN_NAME                    = "${var.subdomain_name}.${var.domain_name}"
   }) : ""
 
   dns_config = var.create_dns_record ? templatefile("${path.module}/templates/dns_config.sh.tmpl", {
     env_file = replace(local.dns_env, "$", "\\$")
-    domain_name = "n8n.${var.domain_name}"
+    domain_name = "${var.subdomain_name}.${var.domain_name}"
     ssl_email = var.ssl_email
   }) : ""
 

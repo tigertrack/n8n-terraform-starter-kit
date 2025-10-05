@@ -53,3 +53,8 @@ variable "n8n_user_management_jwt_secret" {
 variable "ssl_email" {
   type = string
 }
+
+variable "subdomain_name" {
+  type = string
+  default = "n8n"
+}
