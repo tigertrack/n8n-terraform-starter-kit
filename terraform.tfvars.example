@@ -1,0 +1,19 @@
+# AWS Configuration
+aws_region = "us-east-1"
+instance_type = "t3.small"
+
+# SSH Configuration
+key_name = "key-name-for-aws"
+public_key_path = "~/.ssh/local-path-ssh-public-key"
+my_ip_cidr = "0.0.0.0/0"  # Restrict SSH access to your IP, set to 0 to allow all IP
+
+# Domain Configuration
+domain_name = "yourdomain.com"
+create_dns_record = true # Set to false if you only just want to use IP
+ssl_email = "your@email.com"
+
+# n8n Security
+basic_auth_user = "admin"
+basic_auth_password = "admin"
+n8n_encryption_key = "n8n-secret"
+n8n_user_management_jwt_secret = "n8n-jwt-secret"
